@@ -20,12 +20,6 @@
         .animate-fadeIn {
             animation: fadeIn 0.5s ease-out forwards;
         }
-        /* Custom date picker icon */
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 24 24"><path fill="%236B7280" d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></svg>') no-repeat;
-            cursor: pointer;
-            opacity: 0.7;
-        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -81,34 +75,78 @@
         <span id="toast-message"></span>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script type="module">
+        // Firebase v9+ SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Firebase config placeholder - will be provided by the environment
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Initialize Firebase
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        // Bookings collection reference
+        const bookingsCol = collection(db, `artifacts/${appId}/public/data/bookings`);
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const app = {
                 state: {
                     currentDate: new Date(),
-                    bookings: JSON.parse(localStorage.getItem('bookings')) || {},
+                    bookings: {},
                     userId: null,
                     adminUserId: 'admin-user-123',
                     adminPassword: '047035',
                 },
 
-                init() {
-                    this.initUserId();
+                async init() {
                     this.cacheDOMElements();
                     this.addEventListeners();
-                    this.render();
+                    await this.authSetup(); // Authenticate before doing anything else
                 },
-                
-                initUserId() {
-                    let currentUserId = localStorage.getItem('bookingAppUserId');
-                    if (!currentUserId) {
-                        currentUserId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-                        localStorage.setItem('bookingAppUserId', currentUserId);
+
+                async authSetup() {
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            this.state.userId = user.uid;
+                             // Check for local admin override
+                            const localAdminId = localStorage.getItem('bookingAppUserId');
+                            if (localAdminId === this.state.adminUserId) {
+                                this.state.userId = this.state.adminUserId;
+                            }
+
+                            if (this.state.userId === this.state.adminUserId) {
+                                this.elements.adminModeIndicator.classList.remove('hidden');
+                            }
+                            this.listenForBookings(); // Start listening for data after authentication
+                        }
+                    });
+                     // Sign in
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        try {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } catch (error) {
+                            console.error("Error signing in with custom token, falling back to anonymous:", error);
+                            await signInAnonymously(auth);
+                        }
+                    } else {
+                        await signInAnonymously(auth);
                     }
-                    this.state.userId = currentUserId;
-                    if (this.state.userId === this.state.adminUserId) {
-                        this.elements.adminModeIndicator.classList.remove('hidden');
-                    }
+                },
+
+                listenForBookings() {
+                    onSnapshot(bookingsCol, (snapshot) => {
+                        const newBookings = {};
+                        snapshot.forEach((doc) => {
+                            newBookings[doc.id] = doc.data();
+                        });
+                        this.state.bookings = newBookings;
+                        this.render();
+                    });
                 },
 
                 cacheDOMElements() {
@@ -297,7 +335,7 @@
                      `;
                 },
 
-                handleBookingSubmit(e) {
+                async handleBookingSubmit(e) {
                     e.preventDefault();
                     const form = e.target;
                     const time = form.dataset.time;
@@ -313,15 +351,20 @@
                     const dateKey = this.state.currentDate.toISOString().split('T')[0];
                     const bookingKey = `1-${dateKey}-${time}`;
 
-                    this.state.bookings[bookingKey] = { userName, userExtension, meetingTopic, userId: this.state.userId };
+                    const bookingData = { userName, userExtension, meetingTopic, userId: this.state.userId };
                     
-                    this.saveBookings();
-                    this.toggleDailyModal(false);
-                    this.showToast('預約成功！');
-                    this.render();
+                    try {
+                        await setDoc(doc(bookingsCol, bookingKey), bookingData);
+                        this.toggleDailyModal(false);
+                        this.showToast('預約成功！');
+                        // No need to call render, onSnapshot will do it.
+                    } catch(error) {
+                        console.error("Error adding document: ", error);
+                        alert("預約失敗，請稍後再試。");
+                    }
                 },
                 
-                handleCancelBooking(key) {
+                async handleCancelBooking(key) {
                     const booking = this.state.bookings[key];
                     if (!booking) return;
 
@@ -329,18 +372,22 @@
                         alert('您沒有權限取消此預約！');
                         return;
                     }
-
-                    delete this.state.bookings[key];
-                    this.saveBookings();
-                    this.toggleDailyModal(false);
-                    this.showToast('預約已取消！');
-                    this.render();
+                    
+                    try {
+                        await deleteDoc(doc(bookingsCol, key));
+                        this.toggleDailyModal(false);
+                        this.showToast('預約已取消！');
+                    } catch(error) {
+                         console.error("Error removing document: ", error);
+                        alert("取消失敗，請稍後再試。");
+                    }
                 },
 
 
                 handleAdminLogin() {
                     const password = prompt('請輸入管理員密碼:');
                     if (password === this.state.adminPassword) {
+                        // Using localStorage for admin status persistence across sessions
                         localStorage.setItem('bookingAppUserId', this.state.adminUserId);
                         this.state.userId = this.state.adminUserId;
                         this.elements.adminModeIndicator.classList.remove('hidden');
@@ -355,7 +402,6 @@
                         this.renderDailyModal();
                         this.elements.dailyBookingModal.classList.remove('hidden');
                         
-                        // Add event listeners for the new modal content
                         this.elements.dailyBookingModal.querySelectorAll('.show-form-btn').forEach(btn => {
                             btn.onclick = (e) => {
                                 const time = e.target.dataset.time;
@@ -376,10 +422,6 @@
                     } else {
                         this.elements.dailyBookingModal.classList.add('hidden');
                     }
-                },
-
-                saveBookings() {
-                    localStorage.setItem('bookings', JSON.stringify(this.state.bookings));
                 },
                 
                 showToast(message) {
