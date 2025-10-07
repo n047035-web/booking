@@ -30,7 +30,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <div id="app" class="container mx-auto p-4 md:p-8 max-w-5xl">
+    <div id="app" class="container mx-auto p-4 md:p-8 max-w-7xl">
         <div class="absolute top-4 right-4 z-10">
             <button id="admin-login-btn" class="text-sm text-gray-500 hover:text-indigo-700 font-medium py-1 px-3 rounded-md hover:bg-gray-200 transition-colors">
                 管理員登入
@@ -39,93 +39,38 @@
         <header class="text-center mb-8 md:mb-12">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-900">開標室預約系統</h1>
             <p id="admin-mode-indicator" class="text-indigo-600 font-bold mt-2 animate-fadeIn hidden">管理員模式已啟用</p>
-            <p class="text-lg text-gray-600 mt-2">輕鬆預訂您的開標時間（最多可預約半年內）</p>
         </header>
 
-        <div class="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl animate-fadeIn mb-16">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
-               <h2 class="text-3xl font-bold">開標室</h2>
-                <div class="flex items-center mt-4 sm:mt-0 bg-gray-100 p-2 rounded-lg relative">
-                    <button id="prev-day" class="p-2 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><i class="ri-arrow-left-s-line text-xl"></i></button>
-                    <div class="mx-4 text-center cursor-pointer">
-                        <h3 id="current-date-display" class="text-lg font-semibold w-40"></h3>
-                        <p id="current-weekday" class="text-sm text-gray-500"></p>
-                        <input type="date" id="date-picker" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                    </div>
-                    <button id="next-day" class="p-2 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><i class="ri-arrow-right-s-line text-xl"></i></button>
-                </div>
-            </div>
-            <div id="time-slots-container" class="grid grid-cols-2 gap-8 max-w-sm mx-auto mt-8">
-                <!-- Time slots will be injected here -->
-            </div>
-        </div>
-
         <div class="animate-fadeIn" style="animation-delay: 0.2s;">
-            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">六個月內預約狀態</h2>
-            <div id="calendar-view-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div class="text-center mb-8">
+                <div class="flex justify-center items-center gap-6 mb-4">
+                    <h2 class="text-3xl font-bold text-gray-800">六個月內預約狀態</h2>
+                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 bg-blue-500 rounded-full"></div><span>上午已預約</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 bg-yellow-500 rounded-full"></div><span>下午已預約</span></div>
+                    </div>
+                </div>
+                <p class="text-lg text-indigo-700 bg-indigo-100 font-semibold p-3 rounded-lg inline-block">點選下方日曆以進行預約</p>
+                <p class="text-sm text-gray-500 mt-2">（只能預約今日起半年內）</p>
+            </div>
+            <div id="calendar-view-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Calendar views will be injected here -->
             </div>
-            <div class="flex justify-center items-center gap-6 mt-6 text-sm text-gray-600">
-                <div class="flex items-center gap-2"><div class="w-3 h-3 bg-blue-500 rounded-full"></div><span>上午已預約</span></div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 bg-yellow-500 rounded-full"></div><span>下午已預約</span></div>
-            </div>
         </div>
     </div>
 
-    <!-- Booking Modal -->
-    <div id="booking-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden animate-fadeIn">
-        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+    <!-- Daily Booking Modal -->
+    <div id="daily-booking-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden animate-fadeIn">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">預約開標室</h2>
-                <button id="close-booking-modal" class="p-1 rounded-full hover:bg-gray-200"><i class="ri-close-line text-2xl text-gray-600"></i></button>
+                <h2 id="daily-modal-date" class="text-2xl font-bold"></h2>
+                <button id="close-daily-modal" class="p-1 rounded-full hover:bg-gray-200"><i class="ri-close-line text-2xl text-gray-600"></i></button>
             </div>
-            <div class="space-y-3 mb-6 text-gray-600">
-                <p><strong>開標室：</strong> 開標室</p>
-                <p><strong>日期：</strong> <span id="modal-date"></span></p>
-                <p><strong>時間：</strong> <span id="modal-time"></span></p>
-            </div>
-            <form id="booking-form">
-                <div class="mb-4">
-                    <label for="userName" class="block text-sm font-medium text-gray-700 mb-1">您的姓名</label>
-                    <input type="text" id="userName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required />
-                </div>
-                <div class="mb-4">
-                    <label for="userExtension" class="block text-sm font-medium text-gray-700 mb-1">聯絡分機</label>
-                    <input type="text" id="userExtension" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required />
-                </div>
-                <div class="mb-6">
-                    <label for="meetingTopic" class="block text-sm font-medium text-gray-700 mb-1">會議主題</label>
-                    <input type="text" id="meetingTopic" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required />
-                </div>
-                <div class="flex justify-end gap-4">
-                    <button type="button" id="cancel-booking-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">確認預約</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Details Modal -->
-    <div id="details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden animate-fadeIn">
-         <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">預約詳情</h2>
-                <button id="close-details-modal" class="p-1 rounded-full hover:bg-gray-200"><i class="ri-close-line text-2xl text-gray-600"></i></button>
-            </div>
-            <div class="space-y-4 text-lg text-gray-700">
-                <p><strong>日期：</strong> <span id="details-date"></span></p>
-                <p><strong>時間：</strong> <span id="details-time"></span></p>
-                <hr/>
-                <p><strong>預約人：</strong> <span id="details-userName"></span></p>
-                <p><strong>聯絡分機：</strong> <span id="details-userExtension"></span></p>
-                <p><strong>會議主題：</strong> <span id="details-meetingTopic"></span></p>
-            </div>
-            <div class="flex justify-end gap-4 mt-8">
-                <button id="close-details-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">關閉</button>
-                <button id="cancel-booking-details-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2 hidden">
-                    <i class="ri-delete-bin-6-line"></i>
-                    取消預約
-                </button>
+            <div class="space-y-6">
+                <!-- Morning Slot -->
+                <div id="daily-modal-morning" class="p-4 rounded-lg border"></div>
+                <!-- Afternoon Slot -->
+                <div id="daily-modal-afternoon" class="p-4 rounded-lg border"></div>
             </div>
         </div>
     </div>
@@ -142,13 +87,9 @@
                 state: {
                     currentDate: new Date(),
                     bookings: JSON.parse(localStorage.getItem('bookings')) || {},
-                    selectedTime: null,
                     userId: null,
                     adminUserId: 'admin-user-123',
-                    adminPassword: 'password123',
-                    isModalOpen: false,
-                    isDetailsModalOpen: false,
-                    selectedBookingKey: null,
+                    adminPassword: '047035',
                 },
 
                 init() {
@@ -172,31 +113,12 @@
 
                 cacheDOMElements() {
                     this.elements = {
-                        dateDisplay: document.getElementById('current-date-display'),
-                        weekdayDisplay: document.getElementById('current-weekday'),
-                        datePicker: document.getElementById('date-picker'),
-                        prevDayBtn: document.getElementById('prev-day'),
-                        nextDayBtn: document.getElementById('next-day'),
-                        timeSlotsContainer: document.getElementById('time-slots-container'),
                         calendarViewContainer: document.getElementById('calendar-view-container'),
-                        bookingModal: document.getElementById('booking-modal'),
-                        closeBookingModalBtn: document.getElementById('close-booking-modal'),
-                        modalDate: document.getElementById('modal-date'),
-                        modalTime: document.getElementById('modal-time'),
-                        bookingForm: document.getElementById('booking-form'),
-                        userNameInput: document.getElementById('userName'),
-                        userExtensionInput: document.getElementById('userExtension'),
-                        meetingTopicInput: document.getElementById('meetingTopic'),
-                        cancelBookingBtn: document.getElementById('cancel-booking-btn'),
-                        detailsModal: document.getElementById('details-modal'),
-                        closeDetailsModalBtn: document.getElementById('close-details-modal'),
-                        detailsDate: document.getElementById('details-date'),
-                        detailsTime: document.getElementById('details-time'),
-                        detailsUserName: document.getElementById('details-userName'),
-                        detailsUserExtension: document.getElementById('details-userExtension'),
-                        detailsMeetingTopic: document.getElementById('details-meetingTopic'),
-                        closeDetailsBtn: document.getElementById('close-details-btn'),
-                        cancelBookingDetailsBtn: document.getElementById('cancel-booking-details-btn'),
+                        dailyBookingModal: document.getElementById('daily-booking-modal'),
+                        closeDailyModal: document.getElementById('close-daily-modal'),
+                        dailyModalDate: document.getElementById('daily-modal-date'),
+                        dailyModalMorning: document.getElementById('daily-modal-morning'),
+                        dailyModalAfternoon: document.getElementById('daily-modal-afternoon'),
                         adminLoginBtn: document.getElementById('admin-login-btn'),
                         adminModeIndicator: document.getElementById('admin-mode-indicator'),
                         toast: document.getElementById('toast'),
@@ -205,88 +127,15 @@
                 },
 
                 addEventListeners() {
-                    this.elements.prevDayBtn.addEventListener('click', () => this.changeDate(-1));
-                    this.elements.nextDayBtn.addEventListener('click', () => this.changeDate(1));
-                    this.elements.datePicker.addEventListener('change', (e) => this.setDate(new Date(e.target.value)));
-                    this.elements.closeBookingModalBtn.addEventListener('click', () => this.toggleBookingModal(false));
-                    this.elements.cancelBookingBtn.addEventListener('click', () => this.toggleBookingModal(false));
-                    this.elements.bookingForm.addEventListener('submit', (e) => this.handleBookingSubmit(e));
-                    this.elements.closeDetailsModalBtn.addEventListener('click', () => this.toggleDetailsModal(false));
-                    this.elements.closeDetailsBtn.addEventListener('click', () => this.toggleDetailsModal(false));
-                    this.elements.cancelBookingDetailsBtn.addEventListener('click', () => this.handleCancelBooking());
+                    this.elements.closeDailyModal.addEventListener('click', () => this.toggleDailyModal(false));
                     this.elements.adminLoginBtn.addEventListener('click', () => this.handleAdminLogin());
                     this.elements.calendarViewContainer.addEventListener('click', (e) => this.handleCalendarClick(e));
                 },
 
                 render() {
-                    this.renderDateDisplay();
-                    this.renderTimeSlots();
                     this.renderCalendarViews();
-                    this.updateDateLimits();
                 },
                 
-                updateDateLimits() {
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
-                    const sixMonthsLater = new Date();
-                    sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
-                    
-                    const minDate = today.toISOString().split("T")[0];
-                    const maxDate = sixMonthsLater.toISOString().split("T")[0];
-
-                    this.elements.datePicker.setAttribute('min', minDate);
-                    this.elements.datePicker.setAttribute('max', maxDate);
-
-                    this.elements.prevDayBtn.disabled = this.state.currentDate <= today;
-                    this.elements.nextDayBtn.disabled = this.state.currentDate >= sixMonthsLater;
-                },
-
-                renderDateDisplay() {
-                    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const weekdayOptions = { weekday: 'long' };
-                    this.elements.dateDisplay.textContent = this.state.currentDate.toLocaleDateString('zh-TW', dateOptions);
-                    this.elements.weekdayDisplay.textContent = this.state.currentDate.toLocaleDateString('zh-TW', weekdayOptions);
-                },
-
-                renderTimeSlots() {
-                    this.elements.timeSlotsContainer.innerHTML = '';
-                    const timeSlots = ['上午', '下午'];
-                    const dateKey = this.state.currentDate.toISOString().split('T')[0];
-
-                    timeSlots.forEach(time => {
-                        const bookingKey = `1-${dateKey}-${time}`;
-                        const booking = this.state.bookings[bookingKey];
-                        const div = document.createElement('div');
-                        
-                        if (booking) {
-                            div.innerHTML = `
-                                <button data-key="${bookingKey}" class="w-full p-6 text-center rounded-lg bg-red-100 border border-red-200 hover:bg-red-200 hover:shadow-md transition-all duration-200 view-details-btn">
-                                    <p class="font-semibold text-xl text-red-800">${time}</p>
-                                    <p class="text-sm text-red-600 truncate mt-1 flex items-center justify-center gap-1">
-                                        <i class="ri-information-line"></i>
-                                        <span>查看詳情</span>
-                                    </p>
-                                </button>
-                            `;
-                        } else {
-                            div.innerHTML = `
-                                <button data-time="${time}" class="w-full p-6 text-center rounded-lg bg-green-100 border border-green-200 hover:bg-green-200 hover:shadow-md transition-all duration-200 book-btn">
-                                    <p class="font-semibold text-xl text-green-800">${time}</p>
-                                    <p class="text-sm text-green-600 mt-1">可預約</p>
-                                </button>
-                            `;
-                        }
-                        this.elements.timeSlotsContainer.appendChild(div);
-                    });
-
-                    this.elements.timeSlotsContainer.querySelectorAll('.book-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => this.handleBookClick(e.currentTarget.dataset.time));
-                    });
-                    this.elements.timeSlotsContainer.querySelectorAll('.view-details-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => this.handleViewDetailsClick(e.currentTarget.dataset.key));
-                    });
-                },
-
                 renderCalendarViews() {
                     this.elements.calendarViewContainer.innerHTML = '';
                     for (let i = 0; i < 6; i++) {
@@ -300,7 +149,8 @@
                     
                     const today = new Date();
                     today.setHours(0,0,0,0);
-                    const sixMonthsLater = new Date();
+
+                    const sixMonthsLater = new Date(today);
                     sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
                     sixMonthsLater.setHours(23, 59, 59, 999);
 
@@ -309,11 +159,11 @@
                     const month = targetDate.getMonth();
                     const monthName = targetDate.toLocaleDateString('zh-TW', { month: 'long', year: 'numeric' });
                     
-                    let html = `<h3 class="text-xl font-bold text-center mb-4">${monthName}</h3>
+                    let html = `<h3 class="text-2xl font-bold text-center mb-4">${monthName}</h3>
                                 <div class="grid grid-cols-7 gap-1 text-center text-sm text-gray-500">
                                     ${['日', '一', '二', '三', '四', '五', '六'].map(d => `<div class="font-medium">${d}</div>`).join('')}
                                 </div>
-                                <div class="grid grid-cols-7 gap-1 mt-2">`;
+                                <div class="grid grid-cols-7 gap-2 mt-2">`;
                     
                     const firstDayOfMonth = new Date(year, month, 1).getDay();
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -326,9 +176,9 @@
                         const isToday = today.toDateString() === date.toDateString();
                         const isSelectable = date >= today && date <= sixMonthsLater;
                         
-                        let cellClasses = "w-10 h-10 flex items-center justify-center rounded-full text-sm relative transition-colors duration-200";
+                        let cellClasses = "w-12 h-12 flex items-center justify-center rounded-full text-base relative transition-colors duration-200";
                         let dataAttr = '';
-
+                        
                         if (isToday) {
                             cellClasses += " bg-indigo-600 text-white font-bold cursor-pointer";
                         } else if (isSelectable) {
@@ -348,8 +198,8 @@
                                     <span>${i}</span>
                                     ${(morningBooking || afternoonBooking) ? `
                                     <div class="absolute bottom-1.5 flex gap-0.5">
-                                        ${morningBooking ? '<div class="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>' : ''}
-                                        ${afternoonBooking ? '<div class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>' : ''}
+                                        ${morningBooking ? '<div class="w-2 h-2 bg-blue-500 rounded-full"></div>' : ''}
+                                        ${afternoonBooking ? '<div class="w-2 h-2 bg-yellow-500 rounded-full"></div>' : ''}
                                     </div>` : ''}
                                  </div>`;
                     }
@@ -364,63 +214,96 @@
                         const dateStr = dayElement.dataset.date;
                         const [year, month, day] = dateStr.split('-');
                         const newDate = new Date(year, parseInt(month) - 1, day);
-                        this.setDate(newDate);
+                        this.setDate(newDate, true);
                     }
                 },
 
-                changeDate(days) {
-                    const newDate = new Date(this.state.currentDate);
-                    newDate.setDate(newDate.getDate() + days);
-                    this.setDate(newDate);
-                },
-
-                setDate(date) {
+                setDate(date, openModal = false) {
                     const today = new Date();
                     today.setHours(0,0,0,0);
-                    const sixMonthsLater = new Date();
+                    const sixMonthsLater = new Date(today);
                     sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
                     sixMonthsLater.setHours(23,59,59,999);
                     
                     if (date >= today && date <= sixMonthsLater) {
                         this.state.currentDate = date;
-                        this.render();
+                        if (openModal) {
+                            this.toggleDailyModal(true);
+                        } else {
+                             this.render();
+                        }
                     }
                 },
 
-                handleBookClick(time) {
-                    this.state.selectedTime = time;
-                    this.elements.modalDate.textContent = this.state.currentDate.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
-                    this.elements.modalTime.textContent = time;
-                    this.toggleBookingModal(true);
+                renderDailyModal() {
+                    const date = this.state.currentDate;
+                    this.elements.dailyModalDate.textContent = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+                    
+                    this.renderTimeSlotForModal('上午', this.elements.dailyModalMorning);
+                    this.renderTimeSlotForModal('下午', this.elements.dailyModalAfternoon);
                 },
 
-                handleViewDetailsClick(key) {
-                    const booking = this.state.bookings[key];
-                    if (!booking) return;
+                renderTimeSlotForModal(time, container) {
+                    const dateKey = this.state.currentDate.toISOString().split('T')[0];
+                    const bookingKey = `1-${dateKey}-${time}`;
+                    const booking = this.state.bookings[bookingKey];
 
-                    this.state.selectedBookingKey = key;
-                    const [, date, time] = key.split('-');
-                    
-                    this.elements.detailsDate.textContent = new Date(date).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
-                    this.elements.detailsTime.textContent = time;
-                    this.elements.detailsUserName.textContent = booking.userName;
-                    this.elements.detailsUserExtension.textContent = booking.userExtension;
-                    this.elements.detailsMeetingTopic.textContent = booking.meetingTopic;
+                    container.innerHTML = ''; // Clear previous content
 
-                    if (this.state.userId === booking.userId || this.state.userId === this.state.adminUserId) {
-                        this.elements.cancelBookingDetailsBtn.classList.remove('hidden');
+                    if (booking) {
+                        container.className = 'p-4 rounded-lg border bg-red-50 border-red-200';
+                        const canCancel = this.state.userId === booking.userId || this.state.userId === this.state.adminUserId;
+                        container.innerHTML = `
+                            <h3 class="font-bold text-lg text-red-800">${time} - 已預約</h3>
+                            <div class="mt-2 space-y-1 text-gray-700">
+                                <p><strong>預約人：</strong> ${booking.userName}</p>
+                                <p><strong>聯絡分機：</strong> ${booking.userExtension}</p>
+                                <p><strong>會議主題：</strong> ${booking.meetingTopic}</p>
+                            </div>
+                            ${canCancel ? `<button data-key="${bookingKey}" class="cancel-booking-btn mt-4 px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700">取消預約</button>` : ''}
+                        `;
                     } else {
-                        this.elements.cancelBookingDetailsBtn.classList.add('hidden');
+                        container.className = 'p-4 rounded-lg border bg-green-50 border-green-200';
+                        container.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <h3 class="font-bold text-lg text-green-800">${time} - 可預約</h3>
+                                <button data-time="${time}" class="show-form-btn px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">預約此時段</button>
+                            </div>
+                        `;
                     }
-                    
-                    this.toggleDetailsModal(true);
+                },
+
+                showBookingFormInModal(time, container) {
+                     container.innerHTML = `
+                        <h3 class="font-bold text-lg text-green-800">${time} - 填寫預約資料</h3>
+                        <form data-time="${time}" class="booking-form-modal mt-4 space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">您的姓名</label>
+                                <input type="text" name="userName" class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" required />
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-700">聯絡分機</label>
+                                <input type="text" name="userExtension" class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" required />
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-700">會議主題</label>
+                                <input type="text" name="meetingTopic" class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" required />
+                            </div>
+                            <div class="flex justify-end gap-2 pt-2">
+                                <button type="button" class="cancel-form-btn px-3 py-1 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300">取消</button>
+                                <button type="submit" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700">確認預約</button>
+                            </div>
+                        </form>
+                     `;
                 },
 
                 handleBookingSubmit(e) {
                     e.preventDefault();
-                    const userName = this.elements.userNameInput.value.trim();
-                    const userExtension = this.elements.userExtensionInput.value.trim();
-                    const meetingTopic = this.elements.meetingTopicInput.value.trim();
+                    const form = e.target;
+                    const time = form.dataset.time;
+                    const userName = form.elements.userName.value.trim();
+                    const userExtension = form.elements.userExtension.value.trim();
+                    const meetingTopic = form.elements.meetingTopic.value.trim();
 
                     if (!userName || !userExtension || !meetingTopic) {
                         alert('請填寫所有欄位！');
@@ -428,23 +311,17 @@
                     }
 
                     const dateKey = this.state.currentDate.toISOString().split('T')[0];
-                    const bookingKey = `1-${dateKey}-${this.state.selectedTime}`;
+                    const bookingKey = `1-${dateKey}-${time}`;
 
-                    this.state.bookings[bookingKey] = {
-                        userName,
-                        userExtension,
-                        meetingTopic,
-                        userId: this.state.userId
-                    };
+                    this.state.bookings[bookingKey] = { userName, userExtension, meetingTopic, userId: this.state.userId };
                     
                     this.saveBookings();
-                    this.toggleBookingModal(false);
+                    this.toggleDailyModal(false);
                     this.showToast('預約成功！');
                     this.render();
                 },
-
-                handleCancelBooking() {
-                    const key = this.state.selectedBookingKey;
+                
+                handleCancelBooking(key) {
                     const booking = this.state.bookings[key];
                     if (!booking) return;
 
@@ -455,10 +332,11 @@
 
                     delete this.state.bookings[key];
                     this.saveBookings();
-                    this.toggleDetailsModal(false);
+                    this.toggleDailyModal(false);
                     this.showToast('預約已取消！');
                     this.render();
                 },
+
 
                 handleAdminLogin() {
                     const password = prompt('請輸入管理員密碼:');
@@ -472,21 +350,31 @@
                     }
                 },
                 
-                toggleBookingModal(show) {
+                toggleDailyModal(show) {
                     if (show) {
-                        this.elements.bookingModal.classList.remove('hidden');
-                        this.elements.bookingForm.reset();
-                    } else {
-                        this.elements.bookingModal.classList.add('hidden');
-                    }
-                },
+                        this.renderDailyModal();
+                        this.elements.dailyBookingModal.classList.remove('hidden');
+                        
+                        // Add event listeners for the new modal content
+                        this.elements.dailyBookingModal.querySelectorAll('.show-form-btn').forEach(btn => {
+                            btn.onclick = (e) => {
+                                const time = e.target.dataset.time;
+                                const container = e.target.closest('.border');
+                                this.showBookingFormInModal(time, container);
+                            };
+                        });
+                        this.elements.dailyBookingModal.querySelectorAll('.cancel-form-btn').forEach(btn => {
+                             btn.onclick = () => this.renderDailyModal();
+                        });
+                        this.elements.dailyBookingModal.querySelectorAll('.booking-form-modal').forEach(form => {
+                             form.onsubmit = (e) => this.handleBookingSubmit(e);
+                        });
+                        this.elements.dailyBookingModal.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+                            btn.onclick = (e) => this.handleCancelBooking(e.target.dataset.key);
+                        });
 
-                toggleDetailsModal(show) {
-                    if (show) {
-                        this.elements.detailsModal.classList.remove('hidden');
                     } else {
-                        this.elements.detailsModal.classList.add('hidden');
-                        this.state.selectedBookingKey = null;
+                        this.elements.dailyBookingModal.classList.add('hidden');
                     }
                 },
 
